@@ -243,7 +243,7 @@ def add_to_crontab(line):
 	line = str.encode(line)
 	if not line in current_crontab:
 		cmd = ["crontab"]
-		if platform.system() == 'FreeBSD':
+		if platform.system() == 'FreeBSD' or platform.linux_distribution()[0]=="arch":
 			cmd = ["crontab", "-"]
 		s = subprocess.Popen(cmd, stdin=subprocess.PIPE)
 		s.stdin.write(current_crontab)
@@ -431,8 +431,6 @@ def update_requirements(bench_path='.'):
 
 	exec_cmd("{pip} install --upgrade pip".format(pip=pip))
 
-	apps_dir = os.path.join(bench_path, 'apps')
-
 	# Update bench requirements
 	bench_req_file = os.path.join(os.path.dirname(bench.__path__[0]), 'requirements.txt')
 	install_requirements(pip, bench_req_file)
@@ -504,7 +502,7 @@ def update_npm_packages(bench_path='.'):
 
 def install_requirements(pip, req_file):
 	if os.path.exists(req_file):
-		exec_cmd("{pip} install -q -r {req_file}".format(pip=pip, req_file=req_file))
+		exec_cmd("{pip} install -q -U -r {req_file}".format(pip=pip, req_file=req_file))
 
 def backup_site(site, bench_path='.'):
 	bench.set_frappe_version(bench_path=bench_path)
@@ -526,6 +524,15 @@ def is_root():
 
 def set_mariadb_host(host, bench_path='.'):
 	update_common_site_config({'db_host': host}, bench_path=bench_path)
+
+def set_redis_cache_host(host, bench_path='.'):
+	update_common_site_config({'redis_cache': "redis://{}".format(host)}, bench_path=bench_path)
+
+def set_redis_queue_host(host, bench_path='.'):
+	update_common_site_config({'redis_queue': "redis://{}".format(host)}, bench_path=bench_path)
+
+def set_redis_socketio_host(host, bench_path='.'):
+	update_common_site_config({'redis_socketio': "redis://{}".format(host)}, bench_path=bench_path)
 
 def update_common_site_config(ddict, bench_path='.'):
 	update_json_file(os.path.join(bench_path, 'sites', 'common_site_config.json'), ddict)
